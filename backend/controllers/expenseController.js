@@ -34,8 +34,28 @@ const getExpenses = async (req, res) => {
     });
   }
 };
+const deleteExpense = async (req, res) => {
+  try {
+    const expense = await Expense.findByIdAndDelete(req.params.id);
 
+    if (!expense) {
+      return res.status(404).json({
+        message: "Expense not found",
+      });
+    }
+
+    res.status(200).json({
+      message: "Expense Deleted",
+      expense,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
 module.exports = {
   addExpense,
   getExpenses,
+  deleteExpense,
 };
