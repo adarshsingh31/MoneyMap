@@ -36,16 +36,55 @@ const getExpenses = async (req, res) => {
 };
 const deleteExpense = async (req, res) => {
   try {
-    const expense = await Expense.findByIdAndDelete(req.params.id);
+    const expense = await Expense.findOneAndDelete({
+      _id: req.params.id,
+      user: req.user.id,
+    });
 
     if (!expense) {
       return res.status(404).json({
-        message: "Expense not found",
+        message: "Expense not found or Unauthorized",
       });
     }
 
     res.status(200).json({
-      message: "Expense Deleted",
+      message: "Expense Deleted Successfully",
+      expense,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+const updateExpense = async (req, res) => {
+  try {
+    const { title, amount, category } = req.body;
+
+    const expense = await Expense.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        user: req.user.id,
+      },
+      {
+        title,
+        amount,
+        category,
+      },
+      {
+        new: true,
+      },
+    );
+
+    if (!expense) {
+      return res.status(404).json({
+        message: "Expense not found or Unauthorized",
+      });
+    }
+
+    res.status(200).json({
+      message: "Expense Updated Successfully",
       expense,
     });
   } catch (error) {
@@ -58,4 +97,5 @@ module.exports = {
   addExpense,
   getExpenses,
   deleteExpense,
+  updateExpense,
 };
