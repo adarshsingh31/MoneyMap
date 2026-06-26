@@ -16,7 +16,11 @@ const expenseSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-
+    type: {
+      type: String,
+      enum: ["income", "expense"],
+      required: true,
+    },
     date: {
       type: Date,
       default: Date.now,
