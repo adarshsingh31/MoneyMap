@@ -2,3 +2,42 @@
 body {
   margin: 0;
 }
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.glass {
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.bg-glow {
+    background: radial-gradient(circle at center, rgba(79, 219, 200, 0.1) 0%, transparent 70%);
+}
+
+.orb {
+    filter: blur(80px);
+    opacity: 0.15;
+    animation: drift 20s infinite alternate ease-in-out;
+}
+
+@keyframes drift {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(100px, 50px) scale(1.2); }
+}
+
+input:focus {
+    box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
+}
+
+.form-transition {
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.active-tab {
+    color: #4fdbc8;
+    border-bottom: 2px solid #4fdbc8;
+}
+

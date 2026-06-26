@@ -1,4 +1,7 @@
 import React, { useEffect } from "react";
+import { Link } from "react-router-dom";
+import logo from "./assets/logo.png";
+
 
 const LandingPage = () => {
   useEffect(() => {
@@ -218,16 +221,16 @@ const LandingPage = () => {
       {/* Navigation Shell */}
       <nav className="fixed top-0 w-full z-50 bg-surface/70 backdrop-blur-md border-b border-outline-variant/30 shadow-sm h-16">
         <div className="flex justify-between items-center px-gutter max-w-container-max mx-auto h-full">
-          <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
             <img
-              alt="MoneyMap 3D Brand Logo"
+              alt="MoneyMap Logo"
               className="h-10 w-auto"
-              src="https://lh3.googleusercontent.com/aida/AP1WRLthuTnPBVIFUJoMC6R_14mjkNcWcagqht-Bxc8i86BlrkDsr8wUub2auOv3Msfils4IlKUTqua7FajEvr4IdsoUZboLgDs5cZp8v3olAg5Q81HRozHJaO9ZNSGKhMmmzgz5akcge7GDK6Z9_wv4Y6_2dNeYfuryJdveiLq2iFylshrPB1PJRa0J_UOv_dZaaXFVNrl9f_vXZIVcftWzqJe5Yt-aHDWpCOv7_DNE2RjRTjxnXPQKvf_gs_s"
+              src={logo}
             />
             <span className="font-headline-md text-headline-md font-bold text-on-surface tracking-tight">
               MoneyMap
             </span>
-          </div>
+          </Link>
           <div className="hidden md:flex gap-8 items-center">
             <a
               className="text-primary font-bold border-b-2 border-primary pb-1 font-body-md text-body-md hover:text-primary transition-colors duration-200"
@@ -261,12 +264,12 @@ const LandingPage = () => {
             </a>
           </div>
           <div className="flex items-center gap-stack-md">
-            <button className="hidden sm:block text-primary font-medium font-body-md text-body-md scale-95 active:scale-90 transition-transform">
+            <Link to="/login" className="hidden sm:block text-primary font-medium font-body-md text-body-md scale-95 active:scale-90 transition-transform text-center">
               Login
-            </button>
-            <button className="btn-gradient px-6 py-2 rounded-lg text-white font-bold font-body-md text-body-md shadow-lg">
-              Get Started
-            </button>
+            </Link>
+            <Link to="/register" className="btn-gradient px-6 py-2 rounded-lg text-white font-bold font-body-md text-body-md shadow-lg text-center">
+              Register
+            </Link>
           </div>
         </div>
       </nav>
@@ -294,10 +297,10 @@ const LandingPage = () => {
             financial freedom with powerful insights.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-stack-md">
-            <button className="btn-gradient px-8 py-4 rounded-xl text-white font-bold font-headline-md flex items-center gap-3 w-full sm:w-auto justify-center">
+            <Link to="/register" className="btn-gradient px-8 py-4 rounded-xl text-white font-bold font-headline-md flex items-center gap-3 w-full sm:w-auto justify-center hover:scale-[1.02] transition-transform">
               Get Started Free
               <span className="material-symbols-outlined">arrow_forward</span>
-            </button>
+            </Link>
             <button className="bg-surface-container-highest/50 backdrop-blur-md border border-outline-variant/50 px-8 py-4 rounded-xl font-bold font-headline-md text-on-surface w-full sm:w-auto hover:bg-surface-container-highest transition-colors">
               Watch Demo
             </button>
@@ -799,9 +802,9 @@ const LandingPage = () => {
             Join over 50,000+ people who are already mastering their money with
             MoneyMap AI.
           </p>
-          <button className="btn-gradient px-12 py-5 rounded-2xl text-white font-bold font-headline-md text-xl shadow-2xl hover:scale-105 transition-all">
+          <Link to="/register" className="inline-block btn-gradient px-12 py-5 rounded-2xl text-white font-bold font-headline-md text-xl shadow-2xl hover:scale-105 transition-all">
             Get Started for Free
-          </button>
+          </Link>
           <p className="mt-6 text-label-sm text-outline">
             No credit card required. Cancel anytime.
           </p>
@@ -812,16 +815,16 @@ const LandingPage = () => {
       <footer className="bg-surface-container-lowest py-section-padding border-t border-outline-variant">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-stack-lg max-w-container-max mx-auto px-gutter">
           <div className="space-y-6">
-            <div className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
               <img
                 alt="MoneyMap Logo"
                 className="h-8 w-auto"
-                src="https://lh3.googleusercontent.com/aida/AP1WRLthuTnPBVIFUJoMC6R_14mjkNcWcagqht-Bxc8i86BlrkDsr8wUub2auOv3Msfils4IlKUTqua7FajEvr4IdsoUZboLgDs5cZp8v3olAg5Q81HRozHJaO9ZNSGKhMmmzgz5akcge7GDK6Z9_wv4Y6_2dNeYfuryJdveiLq2iFylshrPB1PJRa0J_UOv_dZaaXFVNrl9f_vXZIVcftWzqJe5Yt-aHDWpCOv7_DNE2RjRTjxnXPQKvf_gs_s"
+                src={logo}
               />
               <span className="font-headline-sm text-headline-sm font-bold text-on-surface">
                 MoneyMap
               </span>
-            </div>
+            </Link>
             <p className="font-body-md text-on-surface-variant">
               © 2024 MoneyMap AI. All rights reserved. Precision in every penny.
             </p>
