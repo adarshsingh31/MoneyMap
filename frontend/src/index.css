@@ -32,12 +32,117 @@ input:focus {
     box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
-.form-transition {
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 .active-tab {
     color: #10B981;
     border-bottom: 2px solid #10B981;
+}
+
+:root {
+  --background: #F8FAFC;
+  --on-background: #0F172A;
+  --surface: #FFFFFF;
+  --surface-container: #F1F5F9;
+  --surface-container-high: #F1F5F9;
+  --surface-container-highest: #E2E8F0;
+  --surface-container-lowest: #FFFFFF;
+  --surface-container-low: #F8FAFC;
+  --surface-variant: #F1F5F9;
+  --border: #E2E8F0;
+  --outline: #E2E8F0;
+  --text-primary: #0F172A;
+  --text-muted: #64748B;
+  --on-surface: #0F172A;
+  --on-surface-variant: #475569;
+}
+
+.dark {
+  --background: #0B0F19;
+  --on-background: #F8FAFC;
+  --surface: #111827;
+  --surface-container: #1F2937;
+  --surface-container-high: #1F2937;
+  --surface-container-highest: #374151;
+  --surface-container-lowest: #111827;
+  --surface-container-low: #0B0F19;
+  --surface-variant: #1F2937;
+  --border: #1F2937;
+  --outline: #1F2937;
+  --text-primary: #F8FAFC;
+  --text-muted: #9CA3AF;
+  --on-surface: #F8FAFC;
+  --on-surface-variant: #9CA3AF;
+}
+
+/* Global Dark Mode Helper Rules */
+.dark body,
+.dark .bg-background {
+  background-color: var(--background) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark aside,
+.dark header,
+.dark .glass-card,
+.dark .bg-white {
+  background-color: var(--surface) !important;
+}
+
+.dark .text-on-surface,
+.dark .text-text-primary,
+.dark .text-on-secondary-container,
+.dark .text-on-surface-variant,
+.dark p.text-on-surface,
+.dark p.text-text-primary,
+.dark span.text-on-surface,
+.dark h1, .dark h2, .dark h3, .dark h4 {
+  color: var(--text-primary) !important;
+}
+
+.dark .text-text-muted,
+.dark .text-secondary {
+  color: var(--text-muted) !important;
+}
+
+.dark .border-border,
+.dark .border-outline,
+.dark .border-r,
+.dark .border-b,
+.dark .border {
+  border-color: var(--border) !important;
+}
+
+.dark .bg-slate-50,
+.dark .bg-slate-100 {
+  background-color: var(--surface-container) !important;
+}
+
+.dark .divide-border\/30 > * + * {
+  border-color: var(--border) !important;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: var(--surface-container) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border) !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--text-muted) !important;
+}
+
+.dark table {
+  background-color: var(--surface) !important;
+  color: var(--text-primary) !important;
+}
+
+.dark tbody tr:hover {
+  background-color: var(--surface-container) !important;
+}
+
+.dark thead tr {
+  background-color: var(--surface-container) !important;
 }
 

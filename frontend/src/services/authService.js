@@ -1,53 +1,99 @@
-// Authentication service simulator for MoneyMap
+import api from "./api";
 
 /**
- * Simulates a network request to authenticate a user.
- * @param {string} email 
- * @param {string} password 
- * @returns {Promise<object>} Authenticated user data and token
+ * Register a new user
+ * @param {Object} userData
+ * @returns {Promise<Object>}
  */
-export const loginUser = async (email, password) => {
-  // Simulate network delay (1.5 seconds)
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  // Basic mock authentication check
-  if (email === "test@example.com" && password === "password123") {
-    return {
-      success: true,
-      user: {
-        id: "1",
-        name: "Test User",
-        email: "test@example.com",
-        username: "testuser",
-      },
-      token: "mock-jwt-token-12345",
+export const registerUser = async (userData) => {
+  try {
+    const payload = {
+      name: userData.fullName || userData.name,
+      email: userData.email,
+      password: userData.password,
     };
+    const response = await api.post("/auth/register", payload);
+    return response.data;
+  } catch (error) {
+    throw (
+      error.response?.data || {
+        message: "Registration failed",
+      }
+    );
   }
-
-  throw new Error("Invalid email or password. Hint: use test@example.com / password123");
 };
 
 /**
- * Simulates a network request to register a new user.
- * @param {object} userData - User details including fullName, email, password
- * @returns {Promise<object>} Registered user data and token
+ * Login user
+ * @param {Object|String} emailOrUserData
+ * @param {String} [password]
+ * @returns {Promise<Object>}
  */
-export const registerUser = async (userData) => {
-  // Simulate network delay (1.5 seconds)
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  // Basic mock validation/success check
-  if (userData.email === "existing@example.com") {
-    throw new Error("Email address is already registered.");
+export const loginUser = async (emailOrUserData, password) => {
+  try {
+    const payload = typeof emailOrUserData === "object"
+      ? emailOrUserData
+      : { email: emailOrUserData, password };
+    const response = await api.post("/auth/login", payload);
+    return response.data;
+  } catch (error) {
+    throw (
+      error.response?.data || {
+        message: "Login failed",
+      }
+    );
   }
+};
 
-  return {
-    success: true,
-    user: {
-      id: "2",
-      name: userData.fullName,
-      email: userData.email,
-    },
-    token: "mock-jwt-token-67890",
-  };
+/**
+ * Get user profile info
+ * @returns {Promise<Object>}
+ */
+export const getProfile = async () => {
+  try {
+    const response = await api.get("/auth/profile");
+    return response.data;
+  } catch (error) {
+    throw (
+      error.response?.data || {
+        message: "Failed to fetch profile",
+      }
+    );
+  }
+};
+
+/**
+ * Update user profile info
+ * @param {Object} profileData
+ * @returns {Promise<Object>}
+ */
+export const updateProfile = async (profileData) => {
+  try {
+    const response = await api.put("/auth/profile", profileData);
+    return response.data;
+  } catch (error) {
+    throw (
+      error.response?.data || {
+        message: "Failed to update profile",
+      }
+    );
+  }
+};
+
+/**
+ * Change user password
+ * @param {Object} passwordData
+ * @returns {Promise<Object>}
+ */
+export const changePassword = async (passwordData) => {
+  try {
+    const response = await api.put("/auth/change-password", passwordData);
+    return response.data;
+  } catch (error) {
+    throw (
+      error.response?.data || {
+        message: "Failed to change password",
+      }
+    );
+  }
 };

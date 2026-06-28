@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "../assets/logo.png";
+import { useAuth } from "../context/AuthContext";
+import { updateProfile, changePassword } from "../services/authService";
 
 const Settings = () => {
+  const { user, setUser, logout, currency, setCurrency } = useAuth();
+
   // Theme State
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem("theme") || "light";
@@ -11,8 +15,8 @@ const Settings = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Profile Form State
-  const [fullName, setFullName] = useState("Adarsh Singh");
-  const [email, setEmail] = useState("adarsh@gmail.com");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
   const [isEditingProfile, setIsEditingProfile] = useState(false);
 
   // Security Form State
@@ -23,8 +27,7 @@ const Settings = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Preferences State
-  const [currency, setCurrency] = useState("₹ Indian Rupee (INR)");
+  // Preferences State (now loaded from AuthContext)
 
   // Notifications State
   const [emailNotif, setEmailNotif] = useState(true);
@@ -42,6 +45,13 @@ const Settings = () => {
       setShowToast(false);
     }, 3000);
   };
+
+  useEffect(() => {
+    if (user) {
+      setFullName(user.name || "");
+      setEmail(user.email || "");
+    }
+  }, [user]);
 
   // Theme change function
   const handleThemeChange = (newTheme) => {
@@ -91,7 +101,7 @@ const Settings = () => {
     return () => mediaQuery.removeEventListener("change", handleSystemThemeChange);
   }, [theme]);
 
-  const handleUpdatePassword = (e) => {
+  const handleUpdatePassword = async (e) => {
     e.preventDefault();
     if (!currentPassword) {
       triggerToast("Please enter current password");
@@ -101,15 +111,28 @@ const Settings = () => {
       triggerToast("Passwords do not match!");
       return;
     }
-    triggerToast("Password updated successfully!");
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
+    try {
+      await changePassword({ currentPassword, newPassword });
+      triggerToast("Password updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      console.error(err);
+      triggerToast(err.message || "Failed to update password");
+    }
   };
 
-  const handleSaveProfile = () => {
-    setIsEditingProfile(false);
-    triggerToast("Profile details saved successfully!");
+  const handleSaveProfile = async () => {
+    try {
+      const response = await updateProfile({ name: fullName, email });
+      setUser(response.user);
+      setIsEditingProfile(false);
+      triggerToast("Profile details saved successfully!");
+    } catch (err) {
+      console.error(err);
+      triggerToast(err.message || "Failed to update profile details");
+    }
   };
 
   return (
@@ -141,16 +164,27 @@ const Settings = () => {
             <span className="material-symbols-outlined">analytics</span>
             <span className="font-label-sm text-label-sm">Reports</span>
           </Link>
+          <Link className="flex items-center gap-3 px-4 py-3 rounded-lg text-secondary hover:bg-surface-container-low transition-all" to="/budget">
+            <span className="material-symbols-outlined">account_balance</span>
+            <span className="font-label-sm text-label-sm">Budget Planning</span>
+          </Link>
+          <Link className="flex items-center gap-3 px-4 py-3 rounded-lg text-secondary hover:bg-surface-container-low transition-all" to="/ai-analytics">
+            <span className="material-symbols-outlined">insights</span>
+            <span className="font-label-sm text-label-sm">AI Analytics</span>
+          </Link>
           <Link className="flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-50/50 text-primary border-r-4 border-primary font-bold transition-all sidebar-active" to="/settings">
             <span className="material-symbols-outlined">settings</span>
             <span className="font-label-sm text-label-sm">Settings</span>
           </Link>
         </nav>
         <div className="px-3 mt-auto pt-6 border-t border-border space-y-1">
-          <Link className="flex items-center gap-3 px-4 py-3 rounded-lg text-secondary hover:bg-surface-container-low transition-all" to="/">
+          <button 
+            onClick={logout}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-secondary hover:bg-surface-container-low transition-all w-full text-left"
+          >
             <span className="material-symbols-outlined">logout</span>
             <span className="font-label-sm text-label-sm">Sign Out</span>
-          </Link>
+          </button>
         </div>
       </aside>
 
@@ -205,9 +239,6 @@ const Settings = () => {
                       src="https://lh3.googleusercontent.com/aida-public/AB6AXuBu68mnF-XytQL1fWr8dAf85-Ot_3tSHhxNnZQScwXfyaBoikr8dl87UN1yE803MaFp-fqN4ZZeuzGDJ73SiKePf4_tsoEjS1IZsVuA2wHXVFGfPyhd-lNOlzZfL8wh7X7HJd1ugIRmvpPsUbBxQoanM8cJETzxj3zdDVQVdH6-sNinyblRZRYaiTX3ZcDGQOR7Tjdzbydcj0DsaoIw-8GhpKc5VM6Jpz-UyE-e3laA_feyAVife6mRpOaCbWy5GvduK4_XS4AP7WM"
                     />
                   </div>
-                  <button className="absolute bottom-1 right-1 bg-primary text-white p-2 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform">
-                    <span className="material-symbols-outlined text-[18px]">edit</span>
-                  </button>
                 </div>
                 <div className="flex-1 space-y-4 w-full">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -398,122 +429,28 @@ const Settings = () => {
                       <input
                         type="radio"
                         name="theme"
-                        value="system"
-                        checked={theme === "system"}
-                        onChange={() => handleThemeChange("system")}
+                        value="light"
+                        checked={theme === "light"}
+                        onChange={() => handleThemeChange("light")}
                         className="w-5 h-5 text-primary border-border focus:ring-primary/20 cursor-pointer"
                       />
-                      <span className="font-body-md group-hover:text-primary transition-colors">System Default</span>
+                      <span className="font-body-md group-hover:text-primary transition-colors">Light Theme</span>
                     </label>
                   </div>
                 </div>
               </div>
             </section>
-
-            {/* 4. Notifications Section */}
-            <section className="glass-card rounded-xl p-stack-lg bg-white border border-border shadow-sm">
-              <div className="flex items-center gap-3 mb-8">
-                <span className="material-symbols-outlined text-primary">notifications_active</span>
-                <h2 className="font-headline-md text-[20px]">Notifications</h2>
-              </div>
-              <div className="divide-y divide-border/50">
-                <div className="py-5 flex items-center justify-between">
-                  <div className="space-y-1">
-                    <h4 className="font-body-lg font-semibold">Email Notifications</h4>
-                    <p className="text-sm text-secondary">Receive important updates and security alerts on your email</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={emailNotif}
-                      onChange={(e) => {
-                        setEmailNotif(e.target.checked);
-                        triggerToast(`Email notifications ${e.target.checked ? "enabled" : "disabled"}`);
-                      }}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-secondary/30 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                  </label>
-                </div>
-
-                <div className="py-5 flex items-center justify-between">
-                  <div className="space-y-1">
-                    <h4 className="font-body-lg font-semibold">Monthly Report Reminder</h4>
-                    <p className="text-sm text-secondary">Get reminded to check your monthly financial performance reports</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={reminderNotif}
-                      onChange={(e) => {
-                        setReminderNotif(e.target.checked);
-                        triggerToast(`Report reminders ${e.target.checked ? "enabled" : "disabled"}`);
-                      }}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-secondary/30 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                  </label>
-                </div>
-              </div>
-            </section>
-
-            {/* 5. Account Section */}
-            <section className="glass-card rounded-xl p-stack-lg border-l-4 border-l-red-500/20 bg-white border border-border shadow-sm">
-              <div className="flex items-center gap-3 mb-8">
-                <span className="material-symbols-outlined text-primary">manage_accounts</span>
-                <h2 className="font-headline-md text-[20px]">Account Actions</h2>
-              </div>
-              <div className="flex flex-wrap gap-4">
-                <button
-                  onClick={() => triggerToast("Data export initiated...")}
-                  className="flex-1 min-w-[200px] flex items-center justify-center gap-3 px-6 py-3.5 rounded-lg border border-primary text-primary font-bold hover:bg-primary/5 transition-all active:scale-95"
-                >
-                  <span className="material-symbols-outlined">download</span>
-                  <span>Export My Data</span>
-                </button>
-                <button
-                  onClick={() => triggerToast("Account deletion requested...")}
-                  className="flex-1 min-w-[200px] flex items-center justify-center gap-3 px-6 py-3.5 rounded-lg border border-chart-red text-chart-red font-bold hover:bg-chart-red/5 transition-all active:scale-95"
-                >
-                  <span className="material-symbols-outlined">delete_forever</span>
-                  <span>Delete Account</span>
-                </button>
-              </div>
-            </section>
-
-            {/* 6. About Section */}
-            <footer className="glass-card rounded-xl p-stack-lg text-center bg-surface-container-lowest/50 border border-border shadow-sm bg-white">
-              <div className="flex flex-col items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-secondary">info</span>
-                  <h3 className="font-headline-md text-[18px] text-on-surface">About MoneyMap</h3>
-                </div>
-                <div className="space-y-2">
-                  <p className="font-label-sm text-secondary uppercase tracking-widest text-xs">Version 1.0.4 - Premium Elite Edition</p>
-                  <p className="font-body-md text-on-surface-variant">Made with <span className="text-chart-red">❤️</span> for elite financial clarity by Adarsh Singh</p>
-                </div>
-                <div className="flex gap-4 mt-2">
-                  <a className="text-primary hover:underline font-label-sm" href="#">Privacy Policy</a>
-                  <a className="text-primary hover:underline font-label-sm" href="#">Terms of Service</a>
-                  <a className="text-primary hover:underline font-label-sm" href="#">Changelog</a>
-                </div>
-              </div>
-            </footer>
           </div>
         </div>
       </main>
 
-      {/* Floating Micro-interaction Toast */}
-      <div
-        className={`fixed bottom-8 right-8 z-50 transition-all duration-300 transform ${
-          showToast ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0 pointer-events-none"
-        }`}
-      >
-        <div className="bg-slate-900 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-3">
-          <span className="material-symbols-outlined text-emerald-400">check_circle</span>
-          <span className="font-body-md font-medium text-sm">{toastMessage}</span>
+      {/* Toast Notification Container */}
+      {showToast && (
+        <div className="fixed bottom-8 right-8 bg-slate-900 text-white px-6 py-3 rounded-lg shadow-2xl z-50 flex items-center gap-3 animate-in slide-in-from-bottom duration-300">
+          <span className="material-symbols-outlined text-primary text-[20px]">info</span>
+          <span className="text-sm font-semibold">{toastMessage}</span>
         </div>
-      </div>
+      )}
     </div>
   );
 };

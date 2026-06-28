@@ -4,11 +4,12 @@ import AuthLayout from "../components/AuthLayout";
 import AuthCard from "../components/AuthCard";
 import AuthInput from "../components/AuthInput";
 import PasswordInput from "../components/PasswordInput";
-import { loginUser } from "../services/authService";
+import { useAuth } from "../context/AuthContext";
 
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -44,7 +45,7 @@ const Login = () => {
 
     setLoading(true);
     try {
-      const response = await loginUser(email, password);
+      const response = await login(email, password);
       setSuccessMessage(`Login successful! Welcome back, ${response.user.name}.`);
       
       // Navigate to dashboard page after 2 seconds

@@ -1,65 +1,233 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "../assets/logo.png";
+import { useAuth } from "../context/AuthContext";
+import { getExpenses } from "../services/expenseService";
+import { generateFinancialReport } from "../utils/pdfGenerator";
+import { downloadTransactionsCSV } from "../utils/csvGenerator";
+
+const categoryStyles = {
+  food: { icon: "restaurant", iconBg: "bg-orange-50 text-orange-500" },
+  shopping: { icon: "shopping_bag", iconBg: "bg-slate-100 text-slate-600" },
+  transport: { icon: "directions_car", iconBg: "bg-blue-50 text-blue-500" },
+  utilities: { icon: "bolt", iconBg: "bg-yellow-50 text-yellow-600" },
+  entertainment: { icon: "movie", iconBg: "bg-red-50 text-red-600" },
+  salary: { icon: "payments", iconBg: "bg-emerald-50 text-primary" },
+  freelance: { icon: "work", iconBg: "bg-blue-50 text-blue-600" }
+};
+
+const getCategoryStyle = (cat) => {
+  const normalized = String(cat || "").toLowerCase();
+  if (normalized.includes("food")) return categoryStyles.food;
+  if (normalized.includes("shopping")) return categoryStyles.shopping;
+  if (normalized.includes("travel") || normalized.includes("transport") || normalized.includes("fuel")) return categoryStyles.transport;
+  if (normalized.includes("bills") || normalized.includes("utilities") || normalized.includes("rent")) return categoryStyles.utilities;
+  if (normalized.includes("entertainment") || normalized.includes("movie")) return categoryStyles.entertainment;
+  if (normalized.includes("salary") || normalized.includes("payment")) return categoryStyles.salary;
+  if (normalized.includes("freelance") || normalized.includes("work")) return categoryStyles.freelance;
+  return { icon: "category", iconBg: "bg-slate-100 text-slate-600" };
+};
+
+const getEmojiCategory = (cat, type) => {
+  const normalized = String(cat || "").toLowerCase();
+  if (type === "income") {
+    if (normalized.includes("salary")) return "💼 Salary";
+    if (normalized.includes("freelance")) return "💻 Freelance";
+    if (normalized.includes("business")) return "🏢 Business";
+    if (normalized.includes("investment")) return "📈 Investment";
+    if (normalized.includes("interest")) return "🏦 Interest";
+    if (normalized.includes("gift")) return "🎁 Gift";
+    if (normalized.includes("refund")) return "💸 Refund";
+    if (normalized.includes("bonus")) return "🪙 Bonus";
+    if (normalized.includes("rental")) return "💰 Rental Income";
+    if (normalized.includes("online") || normalized.includes("earnings")) return "📱 Online Earnings";
+    if (normalized.includes("prize")) return "🏆 Prize";
+    return "📦 Other";
+  } else {
+    if (normalized.includes("food") || normalized.includes("restaurant")) return "🍔 Food";
+    if (normalized.includes("shopping")) return "🛒 Shopping";
+    if (normalized.includes("travel") || normalized.includes("transport")) return "🚗 Travel";
+    if (normalized.includes("fuel")) return "⛽ Fuel";
+    if (normalized.includes("rent")) return "🏠 Rent";
+    if (normalized.includes("bill") || normalized.includes("utility") || normalized.includes("utilities")) return "💡 Bills";
+    if (normalized.includes("entertainment") || normalized.includes("movie")) return "🎬 Entertainment";
+    if (normalized.includes("healthcare") || normalized.includes("medical")) return "🏥 Healthcare";
+    if (normalized.includes("education") || normalized.includes("book")) return "📚 Education";
+    if (normalized.includes("personal") || normalized.includes("care")) return "🛍 Personal Care";
+    if (normalized.includes("gift")) return "🎁 Gifts";
+    if (normalized.includes("subscription")) return "📱 Subscriptions";
+    if (normalized.includes("business")) return "💼 Business";
+    return "📦 Other";
+  }
+};
 
 const Reports = () => {
-  // Date State
-  const [fromDate, setFromDate] = useState("2026-06-01");
-  const [toDate, setToDate] = useState("2026-06-28");
+  const { logout, user, currencySymbol } = useAuth();
+
+  // Date States
+  const [fromDate, setFromDate] = useState(() => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    return `${yyyy}-${mm}-01`;
+  });
+  const [toDate, setToDate] = useState(() => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  });
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Summary Metrics State
-  const [income, setIncome] = useState(62500);
-  const [expense, setExpense] = useState(19200);
-  const [savings, setSavings] = useState(8750);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState(null);
+  const [isCsvLoading, setIsCsvLoading] = useState(false);
+  const [csvError, setCsvError] = useState(null);
 
-  // Recent Report Rows State
-  const [reportRows, setReportRows] = useState([
-    {
-      id: 1,
-      date: "28 Jun 2026",
-      title: "Grocery Shopping",
-      category: "Food",
-      type: "expense",
-      amount: 850,
-      icon: "restaurant"
-    },
-    {
-      id: 2,
-      date: "27 Jun 2026",
-      title: "Salary Deposit",
-      category: "Salary",
-      type: "income",
-      amount: 50000,
-      icon: "payments"
+  const fetchReportData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getExpenses();
+      setTransactions(data || []);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Failed to load reports data");
+    } finally {
+      setLoading(false);
     }
-  ]);
-
-  useEffect(() => {
-    // Smooth hover effects on cards
-    const cards = document.querySelectorAll(".glass-card");
-    cards.forEach((card) => {
-      card.addEventListener("mouseenter", () => {
-        card.style.transform = "translateY(-2px)";
-        card.style.transition = "transform 0.2s ease-out";
-      });
-      card.style.transition = "transform 0.2s ease-out";
-      card.addEventListener("mouseleave", () => {
-        card.style.transform = "translateY(0)";
-      });
-    });
-  }, []);
-
-  const handleGenerateReport = () => {
-    // Basic interaction simulation
-    alert(`Generating report from ${fromDate} to ${toDate}`);
   };
 
-  const filteredRows = reportRows.filter(
+  useEffect(() => {
+    fetchReportData();
+  }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      const cards = document.querySelectorAll(".glass-card");
+      cards.forEach((card) => {
+        card.addEventListener("mouseenter", () => {
+          card.style.transform = "translateY(-2px)";
+          card.style.transition = "transform 0.2s ease-out";
+        });
+        card.style.transition = "transform 0.2s ease-out";
+        card.addEventListener("mouseleave", () => {
+          card.style.transform = "translateY(0)";
+        });
+      });
+    }
+  }, [loading]);
+
+  const handleGenerateReport = (e) => {
+    e.preventDefault();
+    fetchReportData();
+  };
+
+  const handleDownloadPDF = async () => {
+    setPdfError(null);
+    setIsPdfLoading(true);
+    try {
+      await generateFinancialReport({
+        currencySymbol,
+        userName: user?.name ?? "",
+      });
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      setPdfError("Failed to generate PDF. Please try again.");
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
+
+  const handleDownloadCSV = async () => {
+    setCsvError(null);
+    setIsCsvLoading(true);
+    try {
+      await downloadTransactionsCSV();
+    } catch (err) {
+      console.error("CSV export failed:", err);
+      setCsvError(err.message || "Failed to export CSV. Please try again.");
+    } finally {
+      setIsCsvLoading(false);
+    }
+  };
+
+  // Filter and compute stats
+  const dateRangeFilteredTransactions = transactions.filter((t) => {
+    const rowDate = new Date(t.date || Date.now());
+    const start = new Date(fromDate);
+    const end = new Date(toDate);
+    end.setHours(23, 59, 59, 999);
+    return rowDate >= start && rowDate <= end;
+  });
+
+  const filteredRows = dateRangeFilteredTransactions.filter(
     (row) =>
-      row.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      row.category.toLowerCase().includes(searchQuery.toLowerCase())
+      (row.title || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (row.category || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  let income = 0;
+  let expense = 0;
+  const categoryTotals = {};
+  const monthlyData = {};
+
+  dateRangeFilteredTransactions.forEach((t) => {
+    const emojiCat = getEmojiCategory(t.category, t.type);
+    if (t.type === "income") {
+      income += t.amount;
+    } else {
+      expense += t.amount;
+      categoryTotals[emojiCat] = (categoryTotals[emojiCat] || 0) + t.amount;
+    }
+
+    const d = new Date(t.date || Date.now());
+    const validDate = isNaN(d.getTime()) ? new Date() : d;
+    const m = validDate.toLocaleString("default", { month: "long" });
+    if (!monthlyData[m]) {
+      monthlyData[m] = { income: 0, expense: 0 };
+    }
+    if (t.type === "income") {
+      monthlyData[m].income += t.amount;
+    } else {
+      monthlyData[m].expense += t.amount;
+    }
+  });
+
+  const savings = income - expense;
+
+  const topCategories = Object.entries(categoryTotals)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, amount]) => {
+      const percentage = expense > 0 ? (amount / expense) * 100 : 0;
+      return { name, amount, percentage };
+    });
+
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const fullMonthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  let maxMonthlyVal = 1000;
+  Object.values(monthlyData).forEach((data) => {
+    if (data.income > maxMonthlyVal) maxMonthlyVal = data.income;
+    if (data.expense > maxMonthlyVal) maxMonthlyVal = data.expense;
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <div className="flex items-center gap-3">
+          <svg className="animate-spin h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          <span className="text-text-muted font-body-md">Loading reports...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="font-body-md text-body-md overflow-x-hidden bg-background text-on-surface min-h-screen">
@@ -90,23 +258,34 @@ const Reports = () => {
             <span className="material-symbols-outlined">analytics</span>
             <span className="font-medium">Reports</span>
           </Link>
+          <Link className="flex items-center gap-3 px-6 py-3 text-text-muted hover:bg-surface-variant hover:text-on-surface transition-colors" to="/budget">
+            <span className="material-symbols-outlined">account_balance</span>
+            <span className="font-body-md">Budget Planning</span>
+          </Link>
+          <Link className="flex items-center gap-3 px-6 py-3 text-text-muted hover:bg-surface-variant hover:text-on-surface transition-colors" to="/ai-analytics">
+            <span className="material-symbols-outlined">insights</span>
+            <span className="font-body-md">AI Analytics</span>
+          </Link>
           <Link className="flex items-center gap-3 px-6 py-3 text-text-muted hover:bg-surface-variant hover:text-on-surface transition-colors" to="/settings">
             <span className="material-symbols-outlined">settings</span>
             <span className="font-body-md">Settings</span>
           </Link>
         </nav>
         <div className="mt-auto px-6 border-t border-border pt-4">
-          <Link className="flex items-center gap-3 py-3 text-text-muted hover:text-error transition-colors" to="/">
+          <button 
+            onClick={logout}
+            className="flex items-center gap-3 py-3 text-text-muted hover:text-error transition-colors w-full text-left"
+          >
             <span className="material-symbols-outlined">logout</span>
             <span className="font-body-md">Logout</span>
-          </Link>
+          </button>
         </div>
       </aside>
 
       {/* Main Content Wrapper */}
       <div className="ml-64 flex flex-col min-h-screen">
         {/* Top Navigation Bar */}
-        <header className="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-white border-b border-border shadow-sm z-40 flex justify-between items-center px-gutter">
+        <header className="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-white/80 backdrop-blur-md border-b border-border shadow-sm z-40 flex justify-between items-center px-gutter">
           <div className="flex items-center gap-4 flex-1">
             <div className="flex items-center bg-slate-50 rounded-lg px-3 py-1.5 border border-border w-80">
               <span className="material-symbols-outlined text-text-muted text-sm mr-2">search</span>
@@ -132,7 +311,7 @@ const Reports = () => {
             <div className="h-8 w-px bg-border"></div>
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <p className="text-on-surface font-bold text-sm leading-none">Premium User</p>
+                <p className="text-on-surface font-bold text-sm leading-none">{user?.name || "Premium User"}</p>
                 <p className="text-text-muted text-[10px] uppercase tracking-wider mt-1">ELITE STATUS</p>
               </div>
               <div className="w-10 h-10 rounded-full border-2 border-primary p-0.5">
@@ -154,7 +333,7 @@ const Reports = () => {
 
           <div className="space-y-8 max-w-container-max">
             {/* Date Range Selector */}
-            <section className="glass-card p-6 rounded-xl flex flex-wrap items-end gap-6 bg-white border border-border shadow-sm">
+            <form onSubmit={handleGenerateReport} className="glass-card p-6 rounded-xl flex flex-wrap items-end gap-6 bg-white border border-border shadow-sm">
               <div className="flex-1 min-w-[200px]">
                 <label className="block font-label-sm text-label-sm text-text-muted mb-2 uppercase tracking-wider">From Date</label>
                 <div className="relative">
@@ -180,13 +359,13 @@ const Reports = () => {
                 </div>
               </div>
               <button
-                onClick={handleGenerateReport}
+                type="submit"
                 className="bg-primary text-white px-8 py-2.5 rounded-lg font-bold flex items-center gap-2 hover:bg-emerald-600 transition-all active:scale-95 shadow-sm"
               >
                 <span className="material-symbols-outlined text-lg">analytics</span>
                 Generate Report
               </button>
-            </section>
+            </form>
 
             {/* Summary Cards */}
             <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
@@ -197,14 +376,13 @@ const Reports = () => {
                   </div>
                   <div className="text-right">
                     <p className="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Total Income</p>
-                    <h3 className="font-data-lg text-data-lg text-emerald-600">₹{income.toLocaleString("en-IN")}</h3>
+                    <h3 className="font-data-lg text-data-lg text-emerald-600">{currencySymbol}{income.toLocaleString("en-IN")}</h3>
                   </div>
                 </div>
                 <div className="pt-4 border-t border-border flex items-center justify-between">
                   <span className="text-emerald-600 font-label-sm text-label-sm flex items-center gap-1">
-                    <span className="material-symbols-outlined text-xs">arrow_upward</span> 12.5%
+                    Active Period
                   </span>
-                  <span className="text-text-muted text-[10px]">vs last period</span>
                 </div>
               </div>
 
@@ -215,14 +393,13 @@ const Reports = () => {
                   </div>
                   <div className="text-right">
                     <p className="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Total Expense</p>
-                    <h3 className="font-data-lg text-data-lg text-error">₹{expense.toLocaleString("en-IN")}</h3>
+                    <h3 className="font-data-lg text-data-lg text-error">{currencySymbol}{expense.toLocaleString("en-IN")}</h3>
                   </div>
                 </div>
                 <div className="pt-4 border-t border-border flex items-center justify-between">
                   <span className="text-error font-label-sm text-label-sm flex items-center gap-1">
-                    <span className="material-symbols-outlined text-xs">arrow_downward</span> 8.3%
+                    Active Period
                   </span>
-                  <span className="text-text-muted text-[10px]">vs last period</span>
                 </div>
               </div>
 
@@ -233,14 +410,13 @@ const Reports = () => {
                   </div>
                   <div className="text-right">
                     <p className="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Net Balance</p>
-                    <h3 className="font-data-lg text-data-lg text-blue-600">₹{(income - expense).toLocaleString("en-IN")}</h3>
+                    <h3 className="font-data-lg text-data-lg text-blue-600">{currencySymbol}{savings.toLocaleString("en-IN")}</h3>
                   </div>
                 </div>
                 <div className="pt-4 border-t border-border flex items-center justify-between">
                   <span className="text-blue-600 font-label-sm text-label-sm flex items-center gap-1">
-                    <span className="material-symbols-outlined text-xs">arrow_upward</span> 15.7%
+                    Active Period
                   </span>
-                  <span className="text-text-muted text-[10px]">vs last period</span>
                 </div>
               </div>
 
@@ -251,14 +427,13 @@ const Reports = () => {
                   </div>
                   <div className="text-right">
                     <p className="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Savings</p>
-                    <h3 className="font-data-lg text-data-lg text-primary">₹{savings.toLocaleString("en-IN")}</h3>
+                    <h3 className="font-data-lg text-data-lg text-primary">{currencySymbol}{savings.toLocaleString("en-IN")}</h3>
                   </div>
                 </div>
                 <div className="pt-4 border-t border-border flex items-center justify-between">
                   <span className="text-primary font-label-sm text-label-sm flex items-center gap-1">
-                    <span className="material-symbols-outlined text-xs">arrow_upward</span> 10.2%
+                    Active Period
                   </span>
-                  <span className="text-text-muted text-[10px]">vs last period</span>
                 </div>
               </div>
             </section>
@@ -281,48 +456,33 @@ const Reports = () => {
                   </div>
                 </div>
                 <div className="h-64 flex items-end justify-between px-2 gap-4">
-                  <div className="flex-1 flex flex-col items-center justify-end gap-1 h-full">
-                    <div className="w-full flex justify-center gap-1 h-full items-end">
-                      <div className="w-3 bg-emerald-100 rounded-t h-[70%]"></div>
-                      <div className="w-3 bg-red-100 rounded-t h-[30%]"></div>
-                    </div>
-                    <span className="text-[10px] text-text-muted mt-2">Jan</span>
-                  </div>
-                  <div className="flex-1 flex flex-col items-center justify-end gap-1 h-full">
-                    <div className="w-full flex justify-center gap-1 h-full items-end">
-                      <div className="w-3 bg-emerald-100 rounded-t h-[60%]"></div>
-                      <div className="w-3 bg-red-100 rounded-t h-[40%]"></div>
-                    </div>
-                    <span className="text-[10px] text-text-muted mt-2">Feb</span>
-                  </div>
-                  <div className="flex-1 flex flex-col items-center justify-end gap-1 h-full">
-                    <div className="w-full flex justify-center gap-1 h-full items-end">
-                      <div className="w-3 bg-emerald-100 rounded-t h-[65%]"></div>
-                      <div className="w-3 bg-red-100 rounded-t h-[35%]"></div>
-                    </div>
-                    <span className="text-[10px] text-text-muted mt-2">Mar</span>
-                  </div>
-                  <div className="flex-1 flex flex-col items-center justify-end gap-1 h-full">
-                    <div className="w-full flex justify-center gap-1 h-full items-end">
-                      <div className="w-3 bg-emerald-100 rounded-t h-[80%]"></div>
-                      <div className="w-3 bg-red-100 rounded-t h-[20%]"></div>
-                    </div>
-                    <span className="text-[10px] text-text-muted mt-2">Apr</span>
-                  </div>
-                  <div className="flex-1 flex flex-col items-center justify-end gap-1 h-full">
-                    <div className="w-full flex justify-center gap-1 h-full items-end">
-                      <div className="w-3 bg-emerald-100 rounded-t h-[75%]"></div>
-                      <div className="w-3 bg-red-100 rounded-t h-[45%]"></div>
-                    </div>
-                    <span className="text-[10px] text-text-muted mt-2">May</span>
-                  </div>
-                  <div className="flex-1 flex flex-col items-center justify-end gap-1 h-full">
-                    <div className="w-full flex justify-center gap-1 h-full items-end">
-                      <div className="w-3 bg-primary rounded-t h-[90%]"></div>
-                      <div className="w-3 bg-error rounded-t h-[50%]"></div>
-                    </div>
-                    <span className="text-[10px] text-on-surface font-bold mt-2">Jun</span>
-                  </div>
+                  {months.map((monthAbbr, index) => {
+                    const fullName = fullMonthNames[index];
+                    const data = monthlyData[fullName] || { income: 0, expense: 0 };
+                    const incomePct = Math.min((data.income / maxMonthlyVal) * 100, 100);
+                    const expensePct = Math.min((data.expense / maxMonthlyVal) * 100, 100);
+                    const isCurrentMonth = new Date().getMonth() === index;
+
+                    return (
+                      <div key={monthAbbr} className="flex-1 flex flex-col items-center justify-end gap-1 h-full animate-fade-in">
+                        <div className="w-full flex justify-center gap-1 h-full items-end">
+                          <div 
+                            style={{ height: `${Math.max(incomePct, 2)}%` }} 
+                            className={`w-3 rounded-t transition-all duration-300 ${isCurrentMonth ? "bg-primary" : "bg-emerald-200"}`}
+                            title={`Income: ${currencySymbol}${data.income}`}
+                          ></div>
+                          <div 
+                            style={{ height: `${Math.max(expensePct, 2)}%` }} 
+                            className={`w-3 rounded-t transition-all duration-300 ${isCurrentMonth ? "bg-error" : "bg-red-200"}`}
+                            title={`Expense: ${currencySymbol}${data.expense}`}
+                          ></div>
+                        </div>
+                        <span className={`text-[10px] mt-2 ${isCurrentMonth ? "text-on-surface font-bold" : "text-text-muted"}`}>
+                          {monthAbbr}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -333,37 +493,65 @@ const Reports = () => {
                   <div className="relative w-48 h-48 flex items-center justify-center">
                     <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
                       <circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#F1F5F9" strokeWidth="3"></circle>
-                      <circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#3B82F6" strokeDasharray="40 60" strokeDashoffset="0" strokeWidth="4"></circle>
-                      <circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#10B981" strokeDasharray="23 77" strokeDashoffset="-40" strokeWidth="4"></circle>
-                      <circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#EF4444" strokeDasharray="16 84" strokeDashoffset="-63" strokeWidth="4"></circle>
-                      <circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#64748B" strokeDasharray="21 79" strokeDashoffset="-79" strokeWidth="4"></circle>
+                      {(() => {
+                        let currentOffset = 0;
+                        const colors = {
+                          "🍔 food": "#10B981", // Emerald-500
+                          "🛒 shopping": "#3B82F6", // Blue-500
+                          "🚗 travel": "#F59E0B", // Amber-500
+                          "⛽ fuel": "#F59E0B",
+                          "🏠 rent": "#EF4444",
+                          "💡 bills": "#EF4444",
+                          "🎬 entertainment": "#A78BFA"
+                        };
+                        return topCategories.map((c) => {
+                          const percentage = expense > 0 ? (c.amount / expense) * 100 : 0;
+                          const strokeColor = colors[c.name.toLowerCase()] || "#64748B";
+                          const strokeDasharray = `${percentage} ${100 - percentage}`;
+                          const strokeDashoffset = -currentOffset;
+                          currentOffset += percentage;
+                          return (
+                            <circle
+                              key={c.name}
+                              cx="18"
+                              cy="18"
+                              fill="transparent"
+                              r="15.915"
+                              stroke={strokeColor}
+                              strokeDasharray={strokeDasharray}
+                              strokeDashoffset={strokeDashoffset}
+                              strokeWidth="4"
+                              className="transition-all duration-300"
+                            ></circle>
+                          );
+                        });
+                      })()}
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="font-data-md text-data-md text-on-surface font-bold">₹19,200</span>
+                      <span className="font-data-md text-data-md text-on-surface font-bold">{currencySymbol}{expense.toLocaleString("en-IN")}</span>
                       <span className="text-[10px] text-text-muted">Total Exp</span>
                     </div>
                   </div>
                   <div className="flex-1 grid grid-cols-2 gap-x-4 gap-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                      <span className="font-label-sm text-label-sm text-text-muted">Shopping</span>
-                      <span className="font-data-md text-data-md text-on-surface ml-auto">40%</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                      <span className="font-label-sm text-label-sm text-text-muted">Food</span>
-                      <span className="font-data-md text-data-md text-on-surface ml-auto">23%</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-error"></span>
-                      <span className="font-label-sm text-label-sm text-text-muted">Bills</span>
-                      <span className="font-data-md text-data-md text-on-surface ml-auto">16%</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-slate-500"></span>
-                      <span className="font-label-sm text-label-sm text-text-muted">Others</span>
-                      <span className="font-data-md text-data-md text-on-surface ml-auto">21%</span>
-                    </div>
+                    {topCategories.map((c) => {
+                      const colors = {
+                        "🍔 food": "bg-emerald-500",
+                        "🛒 shopping": "bg-blue-500",
+                        "🚗 travel": "bg-amber-500",
+                        "⛽ fuel": "bg-amber-500",
+                        "🏠 rent": "bg-error",
+                        "💡 bills": "bg-error",
+                        "🎬 entertainment": "bg-violet-500"
+                      };
+                      const bgColor = colors[c.name.toLowerCase()] || "bg-slate-500";
+                      return (
+                        <div key={c.name} className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${bgColor}`}></span>
+                          <span className="font-label-sm text-label-sm text-text-muted capitalize">{c.name}</span>
+                          <span className="font-data-md text-data-md text-on-surface ml-auto">{Math.round(c.percentage)}%</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -373,44 +561,38 @@ const Reports = () => {
             <section className="glass-card p-6 rounded-xl bg-white border border-border shadow-sm">
               <h3 className="font-headline-md text-headline-md text-text-primary mb-6">Top Spending Categories</h3>
               <div className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-sm">
-                    <div className="flex items-center gap-3">
-                      <span className="material-symbols-outlined text-slate-500">shopping_bag</span>
-                      <span className="font-label-sm text-label-sm text-on-surface">Shopping</span>
+                {topCategories.slice(0, 3).map((c) => {
+                  const style = getCategoryStyle(c.name);
+                  const colors = {
+                    "🍔 food": "bg-emerald-500",
+                    "🛒 shopping": "bg-blue-500",
+                    "🚗 travel": "bg-amber-500",
+                    "⛽ fuel": "bg-amber-500",
+                    "🏠 rent": "bg-error",
+                    "💡 bills": "bg-error",
+                    "🎬 entertainment": "bg-violet-500"
+                  };
+                  const barColor = colors[c.name.toLowerCase()] || "bg-slate-500";
+                  return (
+                    <div key={c.name} className="space-y-2">
+                      <div className="flex justify-between items-center text-sm">
+                        <div className="flex items-center gap-3">
+                          <span className={`material-symbols-outlined ${style.iconBg.split(" ")[1]}`}>{style.icon}</span>
+                          <span className="font-label-sm text-label-sm text-on-surface capitalize">{c.name}</span>
+                        </div>
+                        <span className="font-data-md text-data-md text-on-surface font-semibold">
+                          {currencySymbol}{c.amount.toLocaleString("en-IN")} <span className="text-text-muted ml-2 font-normal">{c.percentage.toFixed(1)}%</span>
+                        </span>
+                      </div>
+                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div style={{ width: `${c.percentage}%` }} className={`h-full rounded-full ${barColor}`}></div>
+                      </div>
                     </div>
-                    <span className="font-data-md text-data-md text-on-surface font-semibold">₹7,800 <span class="text-text-muted ml-2 font-normal">40.6%</span></span>
-                  </div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 w-[40.6%] rounded-full"></div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-sm">
-                    <div className="flex items-center gap-3">
-                      <span className="material-symbols-outlined text-slate-500">restaurant</span>
-                      <span className="font-label-sm text-label-sm text-on-surface">Food</span>
-                    </div>
-                    <span className="font-data-md text-data-md text-on-surface font-semibold">₹4,500 <span class="text-text-muted ml-2 font-normal">23.4%</span></span>
-                  </div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 w-[23.4%] rounded-full"></div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-sm">
-                    <div className="flex items-center gap-3">
-                      <span className="material-symbols-outlined text-slate-500">electric_bolt</span>
-                      <span className="font-label-sm text-label-sm text-on-surface">Bills</span>
-                    </div>
-                    <span className="font-data-md text-data-md text-on-surface font-semibold">₹3,100 <span class="text-text-muted ml-2 font-normal">16.1%</span></span>
-                  </div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-error w-[16.1%] rounded-full"></div>
-                  </div>
-                </div>
+                  );
+                })}
+                {topCategories.length === 0 && (
+                  <p className="text-center text-text-muted text-xs">No active categories</p>
+                )}
               </div>
             </section>
 
@@ -434,32 +616,42 @@ const Reports = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/30">
-                    {filteredRows.map((row) => (
-                      <tr key={row.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-4 font-data-md text-data-md text-on-surface">{row.date}</td>
-                        <td className="px-6 py-4 font-body-md text-on-surface font-semibold">{row.title}</td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-primary">
-                              <span className="material-symbols-outlined text-[18px]">{row.icon}</span>
+                    {filteredRows.map((row) => {
+                      const style = getCategoryStyle(row.category);
+                      const rawDate = new Date(row.date || Date.now());
+                      const validDate = isNaN(rawDate.getTime()) ? new Date() : rawDate;
+                      const formattedDate = validDate.toLocaleDateString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric"
+                      });
+                      return (
+                        <tr key={row._id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-6 py-4 font-data-md text-data-md text-on-surface">{formattedDate}</td>
+                          <td className="px-6 py-4 font-body-md text-on-surface font-semibold capitalize">{row.title}</td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${style.iconBg}`}>
+                                <span className="material-symbols-outlined text-[18px]">{style.icon}</span>
+                              </div>
+                              <span className="text-sm font-medium capitalize">{row.category}</span>
                             </div>
-                            <span className="text-sm font-medium">{row.category}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider ${
-                            row.type === "income" ? "bg-emerald-50 text-primary" : "bg-red-50 text-error"
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider ${
+                              row.type === "income" ? "bg-emerald-50 text-primary" : "bg-red-50 text-error"
+                            }`}>
+                              {row.type || "expense"}
+                            </span>
+                          </td>
+                          <td className={`px-6 py-4 font-data-md text-data-md text-right font-bold ${
+                            row.type === "income" ? "text-emerald-600" : "text-error"
                           }`}>
-                            {row.type}
-                          </span>
-                        </td>
-                        <td className={`px-6 py-4 font-data-md text-data-md text-right font-bold ${
-                          row.type === "income" ? "text-emerald-600" : "text-error"
-                        }`}>
-                          {row.type === "income" ? "+" : "-"}₹{row.amount.toLocaleString("en-IN")}
-                        </td>
-                      </tr>
-                    ))}
+                            {row.type === "income" ? "+" : "-"}{currencySymbol}{row.amount.toLocaleString("en-IN")}
+                          </td>
+                        </tr>
+                      );
+                    })}
                     {filteredRows.length === 0 && (
                       <tr>
                         <td colSpan="5" className="px-6 py-8 text-center text-text-muted">
@@ -479,20 +671,54 @@ const Reports = () => {
                 <p className="font-label-sm text-label-sm text-text-muted">Download your financial report in different formats for external audit.</p>
               </div>
               <div className="flex gap-4">
+                {pdfError && (
+                  <p className="text-error text-xs self-center">{pdfError}</p>
+                )}
                 <button
-                  onClick={() => alert("Downloading PDF...")}
-                  className="flex items-center gap-2 px-6 py-2.5 border border-outline text-text-muted rounded-lg font-bold hover:bg-slate-50 transition-all active:scale-95"
+                  type="button"
+                  onClick={handleDownloadPDF}
+                  disabled={isPdfLoading}
+                  className="flex items-center gap-2 px-6 py-2.5 border border-outline text-text-muted rounded-lg font-bold hover:bg-slate-50 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <span className="material-symbols-outlined text-lg">picture_as_pdf</span>
-                  Download PDF
+                  {isPdfLoading ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-lg">picture_as_pdf</span>
+                      Download PDF
+                    </>
+                  )}
                 </button>
                 <button
-                  onClick={() => alert("Downloading CSV...")}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-emerald-600 transition-all shadow-sm active:scale-95"
+                  type="button"
+                  onClick={handleDownloadCSV}
+                  disabled={isCsvLoading}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-emerald-600 transition-all shadow-sm active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <span className="material-symbols-outlined text-lg">table_chart</span>
-                  Download CSV
+                  {isCsvLoading ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-lg">table_chart</span>
+                      Download CSV
+                    </>
+                  )}
                 </button>
+                {csvError && (
+                  <p className="text-error text-xs self-center">{csvError}</p>
+                )}
               </div>
             </footer>
           </div>
