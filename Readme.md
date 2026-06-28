@@ -1,7 +1,7 @@
 # 💰 MoneyMap - Personal Finance Tracker
 
 <p align="center">
- <img width="1024" height="1024" alt="moneymap_new_logo" src="https://github.com/user-attachments/assets/f87e03a2-9810-477f-8ea0-0c1871818bbe" />
+ <img width="133" height="133" alt="moneymap_new_logo" src="https://github.com/user-attachments/assets/f87e03a2-9810-477f-8ea0-0c1871818bbe" />
 
 </p>
 
