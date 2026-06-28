@@ -1,6 +1,18 @@
 <!doctype html>
-<html class="dark" lang="en">
+<html class="light" lang="en">
   <head>
+    <script>
+      (function() {
+        const theme = localStorage.getItem('theme') || 'light';
+        if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.classList.remove('light');
+        } else {
+          document.documentElement.classList.add('light');
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+    </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -20,59 +32,59 @@
         theme: {
           extend: {
             colors: {
-              "on-tertiary": "#003915",
-              "text-primary": "#F1F5F9",
-              "on-secondary-container": "#e6ecff",
-              "error-container": "#93000a",
-              background: "#0b1326",
-              "outline-variant": "#3c4947",
-              "on-secondary": "#002e6a",
-              "on-tertiary-fixed-variant": "#005321",
-              "on-surface-variant": "#bbcac6",
-              "inverse-on-surface": "#283044",
-              "inverse-surface": "#dae2fd",
-              primary: "#4fdbc8",
-              "inverse-primary": "#006b5f",
-              tertiary: "#4ae176",
-              "on-background": "#dae2fd",
-              error: "#ffb4ab",
-              "surface-dim": "#0b1326",
-              "surface-bright": "#31394d",
-              "surface-container-high": "#222a3d",
-              "on-tertiary-fixed": "#002109",
-              "surface-tint": "#4fdbc8",
-              "on-error-container": "#ffdad6",
-              "on-secondary-fixed-variant": "#004395",
-              "gradient-mid": "#3B82F6",
-              "tertiary-container": "#0ebd57",
-              "on-surface": "#dae2fd",
-              "on-secondary-fixed": "#001a42",
-              "surface-container": "#171f33",
-              "secondary-fixed-dim": "#adc6ff",
-              "primary-fixed": "#71f8e4",
-              "on-primary-fixed-variant": "#005048",
-              "surface-container-highest": "#2d3449",
-              "gradient-start": "#06B6D4",
-              "secondary-fixed": "#d8e2ff",
-              border: "#334155",
-              "on-primary": "#003731",
-              "surface-variant": "#2d3449",
-              outline: "#859490",
-              "on-primary-fixed": "#00201c",
-              "on-primary-container": "#00423b",
-              "primary-container": "#14b8a6",
-              "surface-container-low": "#131b2e",
-              "secondary-container": "#0566d9",
-              "tertiary-fixed-dim": "#4ae176",
-              surface: "#1E293B",
-              "text-muted": "#94A3B8",
-              "gradient-end": "#22C55E",
-              "tertiary-fixed": "#6bff8f",
-              "surface-container-lowest": "#060e20",
-              "primary-fixed-dim": "#4fdbc8",
-              "on-error": "#690005",
-              secondary: "#adc6ff",
-              "on-tertiary-container": "#00441a",
+              "on-tertiary": "#FFFFFF",
+              "text-primary": "#0F172A",
+              "on-secondary-container": "#1E293B",
+              "error-container": "#FEE2E2",
+              background: "#F8FAFC",
+              "outline-variant": "#CBD5E1",
+              "on-secondary": "#1E293B",
+              "on-tertiary-fixed-variant": "#065F46",
+              "on-surface-variant": "#475569",
+              "inverse-on-surface": "#F8FAFC",
+              "inverse-surface": "#0F172A",
+              primary: "#10B981",
+              "inverse-primary": "#059669",
+              tertiary: "#10B981",
+              "on-background": "#0F172A",
+              error: "#EF4444",
+              "surface-dim": "#F8FAFC",
+              "surface-bright": "#FFFFFF",
+              "surface-container-high": "#F1F5F9",
+              "on-tertiary-fixed": "#064E3B",
+              "surface-tint": "#10B981",
+              "on-error-container": "#991B1B",
+              "on-secondary-fixed-variant": "#475569",
+              "gradient-mid": "#10B981",
+              "tertiary-container": "#D1FAE5",
+              "on-surface": "#0F172A",
+              "on-secondary-fixed": "#0F172A",
+              "surface-container": "#F1F5F9",
+              "secondary-fixed-dim": "#94A3B8",
+              "primary-fixed": "#D1FAE5",
+              "on-primary-fixed-variant": "#064E3B",
+              "surface-container-highest": "#E2E8F0",
+              "gradient-start": "#10B981",
+              "secondary-fixed": "#F1F5F9",
+              border: "#E2E8F0",
+              "on-primary": "#FFFFFF",
+              "surface-variant": "#F1F5F9",
+              outline: "#E2E8F0",
+              "on-primary-fixed": "#064E3B",
+              "on-primary-container": "#FFFFFF",
+              "primary-container": "#10B981",
+              "surface-container-low": "#F8FAFC",
+              "secondary-container": "#E2E8F0",
+              "tertiary-fixed-dim": "#34D399",
+              surface: "#FFFFFF",
+              "text-muted": "#64748B",
+              "gradient-end": "#059669",
+              "tertiary-fixed": "#A7F3D0",
+              "surface-container-lowest": "#FFFFFF",
+              "primary-fixed-dim": "#34D399",
+              "on-error": "#FFFFFF",
+              secondary: "#64748B",
+              "on-tertiary-container": "#065F46",
             },
             borderRadius: {
               DEFAULT: "0.25rem",
@@ -134,8 +146,8 @@
     </script>
     <style>
       body {
-        background-color: #0b1326;
-        color: #dae2fd;
+        background-color: #F8FAFC;
+        color: #0F172A;
         font-family: "Inter", sans-serif;
         overflow-x: hidden;
       }
@@ -149,22 +161,28 @@
       }
 
       .glass-card {
-        background: rgba(30, 41, 59, 0.7);
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.05);
+      }
+
+      .glass {
+        background: rgba(255, 255, 255, 0.7);
         backdrop-filter: blur(12px);
-        border: 1px solid rgba(51, 65, 85, 0.5);
+        border: 1px solid rgba(226, 232, 240, 0.5);
       }
 
       .btn-gradient {
         background: linear-gradient(
           135deg,
-          #06b6d4 0%,
-          #3b82f6 50%,
-          #22c55e 100%
+          #10b981 0%,
+          #10b981 50%,
+          #059669 100%
         );
         transition: all 0.3s ease;
       }
       .btn-gradient:hover {
-        box-shadow: 0 0 20px rgba(20, 184, 166, 0.4);
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
         transform: translateY(-1px);
       }
 

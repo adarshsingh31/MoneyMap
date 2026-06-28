@@ -8,13 +8,13 @@ body {
 }
 
 .glass {
-    background: rgba(30, 41, 59, 0.7);
+    background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(51, 65, 85, 0.5);
+    border: 1px solid rgba(226, 232, 240, 0.5);
 }
 
 .bg-glow {
-    background: radial-gradient(circle at center, rgba(79, 219, 200, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle at center, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
 }
 
 .orb {
@@ -29,7 +29,7 @@ body {
 }
 
 input:focus {
-    box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
 .form-transition {
@@ -37,7 +37,7 @@ input:focus {
 }
 
 .active-tab {
-    color: #4fdbc8;
-    border-bottom: 2px solid #4fdbc8;
+    color: #10B981;
+    border-bottom: 2px solid #10B981;
 }
 

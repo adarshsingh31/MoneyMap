@@ -47,9 +47,9 @@ const Login = () => {
       const response = await loginUser(email, password);
       setSuccessMessage(`Login successful! Welcome back, ${response.user.name}.`);
       
-      // Navigate to landing page after 2 seconds
+      // Navigate to dashboard page after 2 seconds
       setTimeout(() => {
-        navigate("/");
+        navigate("/dashboard");
       }, 2000);
     } catch (err) {
       setErrors({ form: err.message || "Something went wrong. Please try again." });

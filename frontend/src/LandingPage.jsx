@@ -1,6 +1,8 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import logo from "./assets/logo.png";
+import Lightfall from "./components/Lightfall";
+import Antigravity from "./components/Antigravity";
 
 
 const LandingPage = () => {
@@ -213,7 +215,28 @@ const LandingPage = () => {
   }, []);
 
   return (
-    <>
+    <div className="relative bg-background min-h-screen overflow-hidden">
+      {/* Antigravity background for all sections except Hero section */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
+        <Antigravity
+          count={120}
+          magnetRadius={10}
+          ringRadius={10}
+          waveSpeed={0.4}
+          waveAmplitude={1}
+          particleSize={2}
+          lerpSpeed={0.1}
+          color="#6366F1"
+          autoAnimate={false}
+          particleVariance={1}
+          rotationSpeed={0}
+          depthFactor={1}
+          pulseSpeed={3}
+          particleShape="capsule"
+          fieldStrength={10}
+        />
+      </div>
+
       {/* Glow Orbs for Ambiance */}
       <div className="glow-orb w-[600px] h-[600px] bg-gradient-start top-[-200px] left-[-100px]"></div>
       <div className="glow-orb w-[500px] h-[500px] bg-gradient-end bottom-0 right-[-100px]"></div>
@@ -275,8 +298,27 @@ const LandingPage = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-section-padding px-gutter overflow-hidden">
+      <section className="relative pt-32 pb-section-padding px-gutter overflow-hidden bg-background z-10">
         {/* WebGL Background Animation */}
+        <div className="absolute inset-0 z-0">
+          <Lightfall
+            speed={0.25}
+            streakCount={6}
+            streakWidth={1.2}
+            streakLength={1.2}
+            glow={0.8}
+            density={0.4}
+            twinkle={0.8}
+            zoom={2.5}
+            backgroundGlow={0.3}
+            opacity={0.6}
+            colors={['#10B981', '#059669', '#34D399', '#A7F3D0', '#D1FAE5']}
+            backgroundColor="#F8FAFC"
+            mouseInteraction={true}
+            mouseStrength={0.5}
+            mouseRadius={1.2}
+          />
+        </div>
         <div className="max-w-container-max mx-auto text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-container-high border border-outline-variant/50 mb-8">
             <span className="material-symbols-outlined text-primary text-[18px]">
@@ -951,7 +993,7 @@ const LandingPage = () => {
           </div>
         </div>
       </footer>
-    </>
+    </div>
   );
 };
 
