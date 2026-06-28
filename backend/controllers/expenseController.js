@@ -2,13 +2,14 @@ const Expense = require("../models/Expense");
 
 const addExpense = async (req, res) => {
   try {
-    const { title, amount, category, type } = req.body;
+    const { title, amount, category, type, date } = req.body;
 
     const expense = await Expense.create({
       title,
       amount,
       category,
       type,
+      date: date || undefined,
       user: req.user.id,
     });
 
@@ -37,22 +38,28 @@ const getExpenses = async (req, res) => {
 };
 const deleteExpense = async (req, res) => {
   try {
+    console.log("DELETE REQUEST - Params ID:", req.params.id);
+    console.log("DELETE REQUEST - User ID:", req.user?.id);
+
     const expense = await Expense.findOneAndDelete({
       _id: req.params.id,
       user: req.user.id,
     });
 
     if (!expense) {
+      console.log("DELETE FAILED - Expense not found or unauthorized");
       return res.status(404).json({
         message: "Expense not found or Unauthorized",
       });
     }
 
+    console.log("DELETE SUCCESSFUL - Deleted expense:", expense._id);
     res.status(200).json({
       message: "Expense Deleted Successfully",
       expense,
     });
   } catch (error) {
+    console.error("DELETE ERROR:", error);
     res.status(500).json({
       message: error.message,
     });
@@ -61,7 +68,7 @@ const deleteExpense = async (req, res) => {
 
 const updateExpense = async (req, res) => {
   try {
-    const { title, amount, category } = req.body;
+    const { title, amount, category, type, date } = req.body;
 
     const expense = await Expense.findOneAndUpdate(
       {
@@ -72,6 +79,8 @@ const updateExpense = async (req, res) => {
         title,
         amount,
         category,
+        type,
+        date,
       },
       {
         new: true,
