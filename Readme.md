@@ -268,7 +268,8 @@ https://moneymap-backend-7qhb.onrender.com
 
 ## 💰 Add Transaction
 
-<img width="1905" height="823" alt="image" src="https://github.com/user-attachments/assets/f6ccf284-4bc4-44ea-b7f2-a3d148dcef12" />
+<img width="1866" height="854" alt="image" src="https://github.com/user-attachments/assets/5693c8e4-4567-4dc2-97c9-946a88b4c50d" />
+
 
 
 ---
@@ -282,7 +283,8 @@ https://moneymap-backend-7qhb.onrender.com
 
 ## 📂 Categories
 
-> Add Screenshot Here
+<img width="1897" height="869" alt="image" src="https://github.com/user-attachments/assets/a4fc9ef3-8269-49cd-9250-eb677f3ff5c5" />
+
 
 ---
 
